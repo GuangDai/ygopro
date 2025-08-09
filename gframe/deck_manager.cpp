@@ -6,6 +6,12 @@
 
 namespace ygo {
 
+// 为在头文件中声明的 extern 变量提供定义和默认值
+int DECK_MAX_SIZE = YGOPRO_MAX_DECK;
+int DECK_MIN_SIZE = YGOPRO_MIN_DECK;
+int EXTRA_MAX_SIZE = YGOPRO_MAX_EXTRA;
+int SIDE_MAX_SIZE = YGOPRO_MAX_SIDE;
+
 char DeckManager::deckBuffer[0x10000]{};
 DeckManager deckManager;
 
@@ -81,11 +87,11 @@ static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
 unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int rule) {
 	std::unordered_map<int, int> ccount;
 	// rule
-	if(deck.main.size() < DECK_MIN_SIZE || deck.main.size() > DECK_MAX_SIZE)
+	if(deck.main.size() < (size_t)DECK_MIN_SIZE || deck.main.size() > (size_t)DECK_MAX_SIZE)
 		return (DECKERROR_MAINCOUNT << 28) | (unsigned)deck.main.size();
-	if(deck.extra.size() > EXTRA_MAX_SIZE)
+	if(deck.extra.size() > (size_t)EXTRA_MAX_SIZE)
 		return (DECKERROR_EXTRACOUNT << 28) | (unsigned)deck.extra.size();
-	if(deck.side.size() > SIDE_MAX_SIZE)
+	if(deck.side.size() > (size_t)SIDE_MAX_SIZE)
 		return (DECKERROR_SIDECOUNT << 28) | (unsigned)deck.side.size();
 	auto lflist = GetLFList(lfhash);
 	if (!lflist)
@@ -161,11 +167,11 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 			continue;
 		}
 		if (cd.type & TYPES_EXTRA_DECK) {
-			if (deck.extra.size() < EXTRA_MAX_SIZE)
+			if ((int)deck.extra.size() < EXTRA_MAX_SIZE)
 				deck.extra.push_back(dataManager.GetCodePointer(code));
 		}
 		else {
-			if (deck.main.size() < DECK_MAX_SIZE)
+			if ((int)deck.main.size() < DECK_MAX_SIZE)
 				deck.main.push_back(dataManager.GetCodePointer(code));
 		}
 	}
@@ -179,7 +185,7 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 			errorcode = code;
 			continue;
 		}
-		if(deck.side.size() < SIDE_MAX_SIZE)
+		if((int)deck.side.size() < SIDE_MAX_SIZE)
 			deck.side.push_back(dataManager.GetCodePointer(code));
 	}
 	return errorcode;
@@ -284,7 +290,7 @@ irr::io::IReadFile* DeckManager::OpenDeckReader(const wchar_t* file) {
 }
 bool DeckManager::LoadCurrentDeck(std::istringstream& deckStream, bool is_packlist) {
 	LoadDeckFromStream(current_deck, deckStream, is_packlist);
-	return true;  // the above LoadDeck has return value but we ignore it here for now
+	return true;  // the above LoadDeck has return value but we ignore it here for now
 }
 bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 	current_deck.clear();
@@ -309,7 +315,7 @@ bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 	}
 	std::istringstream deckStream(deckBuffer);
 	LoadDeckFromStream(current_deck, deckStream, is_packlist);
-	return true;  // the above function has return value but we ignore it here for now
+	return true;  // the above function has return value but we ignore it here for now
 }
 bool DeckManager::LoadCurrentDeck(int category_index, const wchar_t* category_name, const wchar_t* deckname) {
 	wchar_t filepath[256];
