@@ -13,7 +13,6 @@ jobs:
       matrix:
         name:
           - windows
-#          - windows-irrklang
 #          - windows-no-dxsdk
           - windows-x64
 #          - windows-2025
