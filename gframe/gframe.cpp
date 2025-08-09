@@ -4,6 +4,7 @@
 #include <event2/thread.h>
 #include <clocale>
 #include <memory>
+#include <cstdlib> // for getenv, atoi
 
 #ifdef __APPLE__
 #import <CoreFoundation/CoreFoundation.h>
@@ -34,6 +35,18 @@ int main(int argc, char* argv[]) {
 #elif !defined(_WIN32)
 	std::setlocale(LC_CTYPE, "");
 #endif
+	
+	// 从环境变量读取卡组限制
+	const char* env_val = nullptr;
+	if ((env_val = std::getenv("YGOPRO_MAX_DECK")))
+		ygo::DECK_MAX_SIZE = std::atoi(env_val);
+	if ((env_val = std::getenv("YGOPRO_MIN_DECK")))
+		ygo::DECK_MIN_SIZE = std::atoi(env_val);
+	if ((env_val = std::getenv("YGOPRO_MAX_EXTRA")))
+		ygo::EXTRA_MAX_SIZE = std::atoi(env_val);
+	if ((env_val = std::getenv("YGOPRO_MAX_SIDE")))
+		ygo::SIDE_MAX_SIZE = std::atoi(env_val);
+
 #ifdef __APPLE__
 	CFURLRef bundle_url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
 	CFURLRef bundle_base_url = CFURLCreateCopyDeletingLastPathComponent(nullptr, bundle_url);
