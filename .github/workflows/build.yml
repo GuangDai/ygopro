@@ -13,7 +13,7 @@ jobs:
       matrix:
         name:
           - windows
-#          - windows-no-dxsdk
+#          - windows-no-dxsd
           - windows-x64
 #          - windows-2025
         include:
