@@ -24,10 +24,11 @@
 #endif
 
 namespace ygo {
-	constexpr int DECK_MAX_SIZE = YGOPRO_MAX_DECK;
-	constexpr int DECK_MIN_SIZE = YGOPRO_MIN_DECK;
-	constexpr int EXTRA_MAX_SIZE = YGOPRO_MAX_EXTRA;
-	constexpr int SIDE_MAX_SIZE = YGOPRO_MAX_SIDE;
+	// 将原来的 constexpr int 修改为 extern int
+	extern int DECK_MAX_SIZE;
+	extern int DECK_MIN_SIZE;
+	extern int EXTRA_MAX_SIZE;
+	extern int SIDE_MAX_SIZE;
 	constexpr int PACK_MAX_SIZE = 1000;
 
 struct LFList {
