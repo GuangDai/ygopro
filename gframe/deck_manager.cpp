@@ -290,7 +290,7 @@ irr::io::IReadFile* DeckManager::OpenDeckReader(const wchar_t* file) {
 }
 bool DeckManager::LoadCurrentDeck(std::istringstream& deckStream, bool is_packlist) {
 	LoadDeckFromStream(current_deck, deckStream, is_packlist);
-	return true;  // the above LoadDeck has return value but we ignore it here for now
+	return true; // the above LoadDeck has return value but we ignore it here for now
 }
 bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 	current_deck.clear();
@@ -315,7 +315,7 @@ bool DeckManager::LoadCurrentDeck(const wchar_t* file, bool is_packlist) {
 	}
 	std::istringstream deckStream(deckBuffer);
 	LoadDeckFromStream(current_deck, deckStream, is_packlist);
-	return true;  // the above function has return value but we ignore it here for now
+	return true; // the above function has return value but we ignore it here for now
 }
 bool DeckManager::LoadCurrentDeck(int category_index, const wchar_t* category_name, const wchar_t* deckname) {
 	wchar_t filepath[256];
