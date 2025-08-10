@@ -321,25 +321,19 @@ workspace "YGOPro"
 filter "project:ocgcore"
     if GetParam("with-lua-curl") then
         print("Integrating Lua-cURLv3 into ocgcore project...")
-        -- Add header search path for lua-cURLv3
-        includedirs { "../lua-cURLv3/src" }
-        -- Add all C source files from lua-cURLv3 to the compilation
-        files { "../lua-cURLv3/src/**.c" }
-        -- Link against the system's libcurl library
-        -- (Requires libcurl4-openssl-dev or similar to be installed)
+        -- **路径修正**: 从 "../lua-cURLv3/src" 改为 "lua-cURLv3/src"
+        includedirs { "lua-cURLv3/src" }
+        files { "lua-cURLv3/src/**.c" }
         links { "curl" }
-        defines { "YGOPRO_LUACURL_ENABLED" } -- Optional: for conditional C++ code
+        defines { "YGOPRO_LUACURL_ENABLED" }
     end
 
     if GetParam("with-lua-sqlite") then
         print("Integrating lsqlite3 into ocgcore project...")
-        -- Add the lsqlite3 source file to the compilation.
-        -- It will find sqlite3.h from the existing ocgcore include paths.
-        files { "../lsqlite3/lsqlite3.c" }
-        -- The ocgcore project already links to sqlite3, so we don't
-        -- need to add it again, but this ensures it.
+        -- **路径修正**: 从 "../lsqlite3/lsqlite3.c" 改为 "lsqlite3/lsqlite3.c"
+        files { "lsqlite3/lsqlite3.c" }
         links { "sqlite3" }
-        defines { "YGOPRO_LSQLITE3_ENABLED" } -- Optional: for conditional C++ code
+        defines { "YGOPRO_LSQLITE3_ENABLED" }
     end
 
 filter {} -- reset filter
