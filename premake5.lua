@@ -1,10 +1,6 @@
--- premake5.lua - All-in-One with Automatic Dependency Management
-
 -- Supported systems: Windows, Linux, MacOS
 
--- ===================================================================
 -- Global settings
--- ===================================================================
 
 -- Default: Build Lua, Irrlicht from source on all systems.
 --          Don't build event, freetype, sqlite, opus, vorbis on Linux or MacOS, use apt or homebrew,
@@ -30,15 +26,8 @@ MINIAUDIO_BUILD_OPUS_VORBIS = os.istarget("windows")
 IRRKLANG_PRO = false
 IRRKLANG_PRO_BUILD_IKPMP3 = false
 
--- ===================================================================
 -- Read settings from command line or environment variables
--- ===================================================================
 
--- New options for Lua bindings
-newoption { trigger = "with-lua-curl", description = "Build with Lua-cURLv3 support (clones repo if not present)" }
-newoption { trigger = "with-lua-sqlite", description = "Build with lsqlite3 support (clones repo if not present)" }
-
--- Original options
 newoption { trigger = "build-lua", category = "YGOPro - lua", description = "" }
 newoption { trigger = "no-build-lua", category = "YGOPro - lua", description = "" }
 newoption { trigger = "lua-include-dir", category = "YGOPro - lua", description = "", value = "PATH" }
@@ -99,58 +88,67 @@ newoption { trigger = "mac-arm", category = "YGOPro", description = "Compile for
 newoption { trigger = "mac-intel", category = "YGOPro", description = "Compile for Intel Mac" }
 
 -- koishipro specific
-boolOptions = { "compat-mycard", "no-lua-safe", "message-debug", "no-side-check", "log-lua-memory-size", }
-for _, boolOption in ipairs(boolOptions) do newoption { trigger = boolOption, category = "YGOPro - options", description = "" } end
 
-numberOptions = { "default-duel-rule", "max-deck", "min-deck", "max-extra", "max-side", "lua-memory-size", }
-for _, numberOption in ipairs(numberOptions) do newoption { trigger = numberOption, category = "YGOPro - options", description = "", value = "NUMBER" } end
+boolOptions = {
+    "compat-mycard",
+    "no-lua-safe",
+    "message-debug",
+    "no-side-check",
+    "log-lua-memory-size",
+}
 
--- ===================================================================
--- Helper Functions
--- ===================================================================
+for _, boolOption in ipairs(boolOptions) do
+    newoption { trigger = boolOption, category = "YGOPro - options", description = "" }
+end
 
-function GetParam(param) return _OPTIONS[param] or os.getenv(string.upper(string.gsub(param,"-","_"))) end
-function ApplyBoolean(param) if GetParam(param) then defines { "YGOPRO_" .. string.upper(string.gsub(param,"-","_")) } end end
-function ApplyNumber(param) local value = GetParam(param) if not value then return end local numberValue = tonumber(value) if numberValue then defines { "YGOPRO_" .. string.upper(string.gsub(param,"-","_")) .. "=" .. numberValue } end end
-function FindHeaderWithSubDir(header, subdir) local result = os.findheader(header) if result and subdir then result = path.join(result, subdir) end return result end
+numberOptions = {
+    "default-duel-rule",
+    "max-deck",
+    "min-deck",
+    "max-extra",
+    "max-side",
+    "lua-memory-size",
+}
 
--- ===================================================================
--- Automatic Dependency Cloning Section
--- This block will run when premake5 is executed.
--- ===================================================================
+for _, numberOption in ipairs(numberOptions) do
+    newoption { trigger = numberOption, category = "YGOPro - options", description = "", value = "NUMBER" }
+end
 
--- Function to clone a git repository if the target directory doesn't exist
-function git_clone_if_missing(repo_url, target_dir)
-    if not os.fs.exists(target_dir) then
-        print("Cloning dependency: " .. repo_url .. " into " .. target_dir)
-        local command = string.format("git clone --depth=1 %s %s", repo_url, target_dir)
-        local result = os.execute(command)
-        if result ~= 0 then
-            error("Failed to clone repository: " .. repo_url)
-        end
-    else
-        print("Dependency already exists: " .. target_dir)
+function GetParam(param)
+    return _OPTIONS[param] or os.getenv(string.upper(string.gsub(param,"-","_")))
+end
+
+function ApplyBoolean(param)
+    if GetParam(param) then
+        defines { "YGOPRO_" .. string.upper(string.gsub(param,"-","_")) }
     end
 end
 
--- Check for --with-lua-curl and clone if needed
-if GetParam("with-lua-curl") then
-    print("Lua-cURLv3 support enabled.")
-    git_clone_if_missing("https://github.com/Lua-cURL/Lua-cURLv3.git", "lua-cURLv3")
+function ApplyNumber(param)
+    local value = GetParam(param)
+    if not value then return end
+    local numberValue = tonumber(value)
+    if numberValue then
+        defines { "YGOPRO_" .. string.upper(string.gsub(param,"-","_")) .. "=" .. numberValue }
+    end
 end
 
--- Check for --with-lua-sqlite and clone if needed
-if GetParam("with-lua-sqlite") then
-    print("lsqlite3 support enabled.")
-    git_clone_if_missing("https://github.com/lua-sqlite/lsqlite3.git", "lsqlite3")
+function FindHeaderWithSubDir(header, subdir)
+    local result = os.findheader(header)
+    if result and subdir then
+        result = path.join(result, subdir)
+    end
+    return result
 end
 
--- ===================================================================
--- Process Build Options
--- ===================================================================
-
-if GetParam("build-lua") then BUILD_LUA = true elseif GetParam("no-build-lua") then BUILD_LUA = false end
+if GetParam("build-lua") then
+    BUILD_LUA = true
+elseif GetParam("no-build-lua") then
+    BUILD_LUA = false
+end
 if not BUILD_LUA then
+    -- at most times you need to change those if you change BUILD_LUA to false
+    -- make sure your lua lib is built with C++ and version >= 5.3
     LUA_LIB_NAME = GetParam("lua-lib-name") or LUA_LIB_NAME
     LUA_INCLUDE_DIR = GetParam("lua-include-dir") or os.findheader("lua.h")
     LUA_LIB_DIR = GetParam("lua-lib-dir") or os.findlib(LUA_LIB_NAME)
@@ -161,85 +159,248 @@ if GetParam("lua-deb") then
     local lua_versions = { "5.4", "5.3" }
     local lua_version = nil
     for _, version in ipairs(lua_versions) do
-        local lua_lib_dir = os.findlib("lua" .. version .. "-c++") or os.findlib("lua" .. version)
+        local lua_lib_dir = os.findlib("lua" .. version .. "-c++")
         if lua_lib_dir then
             print("Found lua " .. version .. " at " .. lua_lib_dir)
             lua_version = version
             LUA_LIB_DIR = lua_lib_dir
-            -- Prefer -c++ lib name if available
-            if os.findlib("lua" .. version .. "-c++") then
-                LUA_LIB_NAME = "lua" .. version .. "-c++"
-            else
-                LUA_LIB_NAME = "lua" .. version
-            end
             break
         end
     end
-    if not lua_version then error("Lua library not found. Please install with 'sudo apt -y install liblua5.3-dev' or 'liblua5.4-dev'") end
+    if not lua_version then
+        error("Lua library not found. Please install lua by command 'sudo apt -y install liblua5.4-dev'")
+    end
+    LUA_LIB_NAME = "lua" .. lua_version .. "-c++"
     LUA_INCLUDE_DIR = path.join("/usr/include", "lua" .. lua_version)
 end
 
-if GetParam("build-event") then BUILD_EVENT = true elseif GetParam("no-build-event") then BUILD_EVENT = false end
-if not BUILD_EVENT then EVENT_INCLUDE_DIR = GetParam("event-include-dir") or os.findheader("event2/event.h") EVENT_LIB_DIR = GetParam("event-lib-dir") or os.findlib("event") end
+if GetParam("build-event") then
+    BUILD_EVENT = true
+elseif GetParam("no-build-event") then
+    BUILD_EVENT = false
+end
+if not BUILD_EVENT then
+    EVENT_INCLUDE_DIR = GetParam("event-include-dir") or os.findheader("event2/event.h")
+    EVENT_LIB_DIR = GetParam("event-lib-dir") or os.findlib("event")
+end
 
-if GetParam("build-freetype") then BUILD_FREETYPE = true elseif GetParam("no-build-freetype") then BUILD_FREETYPE = false end
-if not BUILD_FREETYPE then FREETYPE_INCLUDE_DIR = GetParam("freetype-include-dir") or FindHeaderWithSubDir("freetype2/ft2build.h", "freetype2") FREETYPE_LIB_DIR = GetParam("freetype-lib-dir") or os.findlib("freetype") end
+if GetParam("build-freetype") then
+    BUILD_FREETYPE = true
+elseif GetParam("no-build-freetype") then
+    BUILD_FREETYPE = false
+end
+if not BUILD_FREETYPE then
+    FREETYPE_INCLUDE_DIR = GetParam("freetype-include-dir") or FindHeaderWithSubDir("freetype2/ft2build.h", "freetype2")
+    FREETYPE_LIB_DIR = GetParam("freetype-lib-dir") or os.findlib("freetype")
+end
 
-if GetParam("build-sqlite") then BUILD_SQLITE = true elseif GetParam("no-build-sqlite") then BUILD_SQLITE = false end
-if not BUILD_SQLITE then SQLITE_INCLUDE_DIR = GetParam("sqlite-include-dir") or os.findheader("sqlite3.h") SQLITE_LIB_DIR = GetParam("sqlite-lib-dir") or os.findlib("sqlite3") end
+if GetParam("build-sqlite") then
+    BUILD_SQLITE = true
+elseif GetParam("no-build-sqlite") then
+    BUILD_SQLITE = false
+end
+if not BUILD_SQLITE then
+    SQLITE_INCLUDE_DIR = GetParam("sqlite-include-dir") or os.findheader("sqlite3.h")
+    SQLITE_LIB_DIR = GetParam("sqlite-lib-dir") or os.findlib("sqlite3")
+end
 
-if GetParam("build-irrlicht") then BUILD_IRRLICHT = true elseif GetParam("no-build-irrlicht") then BUILD_IRRLICHT = false end
-if not BUILD_IRRLICHT then IRRLICHT_INCLUDE_DIR = GetParam("irrlicht-include-dir") or os.findheader("irrlicht.h") IRRLICHT_LIB_DIR = GetParam("irrlicht-lib-dir") or os.findlib("irrlicht") end
+if GetParam("build-irrlicht") then
+    BUILD_IRRLICHT = true
+elseif GetParam("no-build-irrlicht") then
+    BUILD_IRRLICHT = false
+end
+if not BUILD_IRRLICHT then
+    IRRLICHT_INCLUDE_DIR = GetParam("irrlicht-include-dir") or os.findheader("irrlicht.h")
+    IRRLICHT_LIB_DIR = GetParam("irrlicht-lib-dir") or os.findlib("irrlicht")
+end
 
-if GetParam("no-dxsdk") then USE_DXSDK = false end
-if USE_DXSDK and os.istarget("windows") then if not os.getenv("DXSDK_DIR") then print("DXSDK_DIR environment variable not set, it seems you don't have the DirectX SDK installed. DirectX mode will be disabled.") USE_DXSDK = false end end
+if GetParam("no-dxsdk") then
+    USE_DXSDK = false
+end
+if USE_DXSDK and os.istarget("windows") then
+    if not os.getenv("DXSDK_DIR") then
+        print("DXSDK_DIR environment variable not set, it seems you don't have the DirectX SDK installed. DirectX mode will be disabled.")
+        USE_DXSDK = false
+    end
+end
 
-if GetParam("no-audio") then USE_AUDIO = false elseif GetParam("no-use-miniaudio") then print("Warning: --no-use-miniaudio is deprecated, use --no-audio") USE_AUDIO = false elseif GetParam("use-miniaudio") then print("Warning: --use-miniaudio is deprecated, use --audio-lib=miniaudio") USE_AUDIO = true AUDIO_LIB = "miniaudio" elseif GetParam("no-use-irrklang") then print("Warning: --no-use-irrklang is deprecated, use --no-audio") USE_AUDIO = false elseif GetParam("use-irrklang") then print("Warning: --use-irrklang is deprecated, use --audio-lib=irrklang") USE_AUDIO = true AUDIO_LIB = "irrklang" end
+if GetParam("no-audio") then
+    USE_AUDIO = false
+elseif GetParam("no-use-miniaudio") then
+    print("Warning: --no-use-miniaudio is deprecated, use --no-audio")
+    USE_AUDIO = false
+elseif GetParam("use-miniaudio") then
+    print("Warning: --use-miniaudio is deprecated, use --audio-lib=miniaudio")
+    USE_AUDIO = true
+    AUDIO_LIB = "miniaudio"
+elseif GetParam("no-use-irrklang") then
+    print("Warning: --no-use-irrklang is deprecated, use --no-audio")
+    USE_AUDIO = false
+elseif GetParam("use-irrklang") then
+    print("Warning: --use-irrklang is deprecated, use --audio-lib=irrklang")
+    USE_AUDIO = true
+    AUDIO_LIB = "irrklang"
+end
+
 if USE_AUDIO then
     AUDIO_LIB = GetParam("audio-lib") or AUDIO_LIB
     if AUDIO_LIB == "miniaudio" then
-        if GetParam("miniaudio-support-opus-vorbis") then MINIAUDIO_SUPPORT_OPUS_VORBIS = true elseif GetParam("no-miniaudio-support-opus-vorbis") then MINIAUDIO_SUPPORT_OPUS_VORBIS = false end
+        if GetParam("miniaudio-support-opus-vorbis") then
+            MINIAUDIO_SUPPORT_OPUS_VORBIS = true
+        elseif GetParam("no-miniaudio-support-opus-vorbis") then
+            MINIAUDIO_SUPPORT_OPUS_VORBIS = false
+        end
         if MINIAUDIO_SUPPORT_OPUS_VORBIS then
-            if GetParam("no-build-opus-vorbis") then MINIAUDIO_BUILD_OPUS_VORBIS = false elseif GetParam("build-opus-vorbis") then MINIAUDIO_BUILD_OPUS_VORBIS = true end
-            if not MINIAUDIO_BUILD_OPUS_VORBIS then OPUS_INCLUDE_DIR = GetParam("opus-include-dir") or FindHeaderWithSubDir("opus/opus.h", "opus") OPUS_LIB_DIR = GetParam("opus-lib-dir") or os.findlib("opus") OPUSFILE_INCLUDE_DIR = GetParam("opusfile-include-dir") or FindHeaderWithSubDir("opus/opusfile.h", "opus") OPUSFILE_LIB_DIR = GetParam("opusfile-lib-dir") or os.findlib("opusfile") VORBIS_INCLUDE_DIR = GetParam("vorbis-include-dir") or os.findheader("vorbis/vorbisfile.h") VORBIS_LIB_DIR = GetParam("vorbis-lib-dir") or os.findlib("vorbis") OGG_INCLUDE_DIR = GetParam("ogg-include-dir") or os.findheader("ogg/ogg.h") OGG_LIB_DIR = GetParam("ogg-lib-dir") or os.findlib("ogg") end
+            if GetParam("no-build-opus-vorbis") then
+                MINIAUDIO_BUILD_OPUS_VORBIS = false
+            elseif GetParam("build-opus-vorbis") then
+                MINIAUDIO_BUILD_OPUS_VORBIS = true
+            end
+            if not MINIAUDIO_BUILD_OPUS_VORBIS then
+                OPUS_INCLUDE_DIR = GetParam("opus-include-dir") or FindHeaderWithSubDir("opus/opus.h", "opus")
+                OPUS_LIB_DIR = GetParam("opus-lib-dir") or os.findlib("opus")
+                OPUSFILE_INCLUDE_DIR = GetParam("opusfile-include-dir") or FindHeaderWithSubDir("opus/opusfile.h", "opus")
+                OPUSFILE_LIB_DIR = GetParam("opusfile-lib-dir") or os.findlib("opusfile")
+                VORBIS_INCLUDE_DIR = GetParam("vorbis-include-dir") or os.findheader("vorbis/vorbisfile.h")
+                VORBIS_LIB_DIR = GetParam("vorbis-lib-dir") or os.findlib("vorbis")
+                OGG_INCLUDE_DIR = GetParam("ogg-include-dir") or os.findheader("ogg/ogg.h")
+                OGG_LIB_DIR = GetParam("ogg-lib-dir") or os.findlib("ogg")
+            end
         end
     elseif AUDIO_LIB == "irrklang" then
         print("Warning: irrKlang is deprecated and may be removed in future, please consider switching to miniaudio")
         IRRKLANG_INCLUDE_DIR = GetParam("irrklang-include-dir") or "../irrklang/include"
-        if os.istarget("windows") then IRRKLANG_LIB_DIR = "../irrklang/lib/Win32-visualStudio" elseif os.istarget("linux") then IRRKLANG_LIB_DIR = "../irrklang/bin/linux-gcc-64" IRRKLANG_LINK_RPATH = "-Wl,-rpath=./irrklang/bin/linux-gcc-64/" elseif os.istarget("macosx") then IRRKLANG_LIB_DIR = "../irrklang/bin/macosx-gcc" end
+        if os.istarget("windows") then
+            IRRKLANG_LIB_DIR = "../irrklang/lib/Win32-visualStudio"
+        elseif os.istarget("linux") then
+            IRRKLANG_LIB_DIR = "../irrklang/bin/linux-gcc-64"
+            IRRKLANG_LINK_RPATH = "-Wl,-rpath=./irrklang/bin/linux-gcc-64/"
+        elseif os.istarget("macosx") then
+            IRRKLANG_LIB_DIR = "../irrklang/bin/macosx-gcc"
+        end
         IRRKLANG_LIB_DIR = GetParam("irrklang-lib-dir") or IRRKLANG_LIB_DIR
-        if GetParam("irrklang-pro") and os.istarget("windows") then IRRKLANG_PRO = true elseif GetParam("no-irrklang-pro") then IRRKLANG_PRO = false end
-        if IRRKLANG_PRO then IRRKLANG_PRO_RELEASE_LIB_DIR = GetParam("irrklang-pro-release-lib-dir") or "../irrklang/lib/Win32-vs2019" IRRKLANG_PRO_DEBUG_LIB_DIR = GetParam("irrklang-pro-debug-lib-dir") or "../irrklang/lib/Win32-visualStudio-debug" end
+        if GetParam("irrklang-pro") and os.istarget("windows") then
+            IRRKLANG_PRO = true
+        elseif GetParam("no-irrklang-pro") then
+            IRRKLANG_PRO = false
+        end
+        if IRRKLANG_PRO then
+            -- irrklang pro can't use the pro lib to debug
+            IRRKLANG_PRO_RELEASE_LIB_DIR = GetParam("irrklang-pro-release-lib-dir") or "../irrklang/lib/Win32-vs2019"
+            IRRKLANG_PRO_DEBUG_LIB_DIR = GetParam("irrklang-pro-debug-lib-dir") or "../irrklang/lib/Win32-visualStudio-debug"
+        end
         IRRKLANG_PRO_BUILD_IKPMP3 = GetParam("build-ikpmp3") or IRRKLANG_PRO
-    else error("Unknown audio library: " .. AUDIO_LIB) end
+    else
+        error("Unknown audio library: " .. AUDIO_LIB)
+    end
 end
 
-if GetParam("winxp-support") and os.istarget("windows") then WINXP_SUPPORT = true end
-IS_ARM=false
-function spawn(cmd) local handle = io.popen(cmd) if not handle then return nil end local result = handle:read("*a") handle:close() if result and #result > 0 then return result else return nil end end
-function IsRunningUnderARM() if os.hostarch then local host_arch = os.hostarch() local possible_archs = { "ARM", "ARM64", "loongarch64", "armv5", "armv7", "aarch64" } for _, arch in ipairs(possible_archs) do if host_arch:lower():match(arch:lower()) then return true end end else local arch_result = spawn("arch 2>/dev/null") if arch_result then arch_result = arch_result:lower():gsub("%s+", "") if arch_result == "arm64" or arch_result == "aarch64" then return true elseif arch_result == "arm" or arch_result == "armv7" or arch_result == "armv5" then return true elseif arch_result == "loongarch64" then return true end end end return false end
-function isARM() return IsRunningUnderARM() end
-IS_ARM=isARM()
-if os.istarget("macosx") then if GetParam("mac-arm") then MAC_ARM = true end if GetParam("mac-intel") then MAC_INTEL = true end if MAC_ARM or (not MAC_INTEL and os.hostarch() == "ARM64") then TARGET_MAC_ARM = true end end
-function getGlibcVersion() local output = os.outputof("getconf GNU_LIBC_VERSION") local major, minor, patch = output:match("glibc (%d+)%.(%d+)%.?(%d*)") if major and minor then major = tonumber(major) minor = tonumber(minor) patch = tonumber(patch) or 0 return (major << 16) | (minor << 8) | patch end return 0 end
+if GetParam("winxp-support") and os.istarget("windows") then
+    WINXP_SUPPORT = true
+end
 
--- ===================================================================
--- Workspace and Project Definitions
--- ===================================================================
+IS_ARM=false
+
+function spawn(cmd)
+    local handle = io.popen(cmd)
+    if not handle then
+        return nil
+    end
+    local result = handle:read("*a")
+    handle:close()
+    if result and #result > 0 then
+        return result
+    else
+        return nil
+    end
+end
+
+function IsRunningUnderARM()
+    -- os.hostarch() is over premake5 beta3,
+    if os.hostarch then
+        local host_arch = os.hostarch()
+        local possible_archs = { "ARM", "ARM64", "loongarch64", "armv5", "armv7", "aarch64" }
+        for _, arch in ipairs(possible_archs) do
+            if host_arch:lower():match(arch:lower()) then
+                return true
+            end
+        end
+    else
+        -- use command 'arch' to detect the architecture on macOS or Linux
+        local arch_result = spawn("arch 2>/dev/null")
+        if arch_result then
+            arch_result = arch_result:lower():gsub("%s+", "")
+            if arch_result == "arm64" or arch_result == "aarch64" then
+                return true
+            elseif arch_result == "arm" or arch_result == "armv7" or arch_result == "armv5" then
+                return true -- for ARMv5, ARMv7, etc.
+            elseif arch_result == "loongarch64" then
+                return true -- for loongarch64
+            end
+        end
+    end
+    return false
+end
+
+function isARM()
+    return IsRunningUnderARM()
+end
+
+IS_ARM=isARM()
+
+if os.istarget("macosx") then
+    if GetParam("mac-arm") then
+        MAC_ARM = true
+    end
+    if GetParam("mac-intel") then
+        MAC_INTEL = true
+    end
+    if MAC_ARM or (not MAC_INTEL and os.hostarch() == "ARM64") then
+        -- building on ARM CPU will target ARM automatically
+        TARGET_MAC_ARM = true
+    end
+end
+
+function getGlibcVersion()
+    local output = os.outputof("getconf GNU_LIBC_VERSION")
+    local major, minor, patch = output:match("glibc (%d+)%.(%d+)%.?(%d*)")
+
+    if major and minor then
+        major = tonumber(major)
+        minor = tonumber(minor)
+        patch = tonumber(patch) or 0
+        return (major << 16) | (minor << 8) | patch
+    end
+
+    return 0
+end
 
 workspace "YGOPro"
     location "build"
     language "C++"
-    objdir "obj" 
+    objdir "obj"    
+
     configurations { "Release", "Debug" }
 
-    for _, numberOption in ipairs(numberOptions) do ApplyNumber(numberOption) end
-    for _, boolOption in ipairs(boolOptions) do ApplyBoolean(boolOption) end
+
+    for _, numberOption in ipairs(numberOptions) do
+        ApplyNumber(numberOption)
+    end
+
+    for _, boolOption in ipairs(boolOptions) do
+        ApplyBoolean(boolOption)
+    end
+
 
     filter "system:windows"
         systemversion "latest"
         startproject "YGOPro"
-        if WINXP_SUPPORT then defines { "WINVER=0x0501" } toolset "v141_xp" else defines { "WINVER=0x0601" } end -- WIN7
+        if WINXP_SUPPORT then
+            defines { "WINVER=0x0501" }
+            toolset "v141_xp"
+        else
+            defines { "WINVER=0x0601" } -- WIN7
+        end
         platforms { "Win32", "x64" }
 
     filter { "system:windows", "platforms:Win32" }
@@ -250,9 +411,15 @@ workspace "YGOPro"
 
     filter "system:macosx"
         libdirs { "/usr/local/lib" }
-        if MAC_ARM then buildoptions { "-arch arm64" } end
-        if MAC_INTEL then buildoptions { "-arch x86_64", "-mavx", "-mfma" } end
-        if MAC_ARM and MAC_INTEL then architecture "universal" end
+        if MAC_ARM then
+            buildoptions { "-arch arm64" }
+        end
+        if MAC_INTEL then
+            buildoptions { "-arch x86_64", "-mavx", "-mfma" }
+        end
+        if MAC_ARM and MAC_INTEL then
+            architecture "universal"
+        end
 
     filter "system:linux"
         buildoptions { "-U_FORTIFY_SOURCE" }
@@ -268,72 +435,74 @@ workspace "YGOPro"
 
     filter { "system:windows", "platforms:Win32", "configurations:Release" }
         targetdir "bin/release/x86"
+
     filter { "system:windows", "platforms:Win32", "configurations:Debug" }
         targetdir "bin/debug/x86"
+
     filter { "system:windows", "platforms:x64", "configurations:Release" }
         targetdir "bin/release/x64"
+
     filter { "system:windows", "platforms:x64", "configurations:Debug" }
         targetdir "bin/debug/x64"
-    
+
     filter { "configurations:Release", "action:vs*" }
         linktimeoptimization "On"
         staticruntime "On"
         disablewarnings { "4244", "4267", "4838", "4996", "6011", "6031", "6054", "6262" }
-    
+
     filter { "configurations:Release", "not action:vs*" }
         defines "NDEBUG"
-    
+
     filter { "configurations:Debug", "action:vs*" }
         disablewarnings { "6011", "6031", "6054", "6262" }
 
     filter "action:vs*"
         cdialect "C11"
-        if not WINXP_SUPPORT then conformancemode "On" end
+        if not WINXP_SUPPORT then
+           conformancemode "On" 
+        end
         vectorextensions "SSE2"
         buildoptions { "/utf-8" }
         defines { "_CRT_SECURE_NO_WARNINGS" }
 
     filter "not action:vs*"
         buildoptions { "-fno-strict-aliasing", "-Wno-multichar", "-Wno-format-security" }
-        if not IS_ARM and not MAC_INTEL then buildoptions "-march=native" end
-        if IS_ARM and not MAC_ARM then buildoptions { "-march=armv8-a", "-mtune=cortex-a72", "-Wno-psabi" } pic "On" end
+        if not IS_ARM and not MAC_INTEL then
+            buildoptions "-march=native"
+        end
+        if IS_ARM and not MAC_ARM then
+            buildoptions {
+                "-march=armv8-a",
+                "-mtune=cortex-a72",
+                "-Wno-psabi"
+            }
+            pic "On"
+        end
 
     filter {}
 
-    -- Include sub-projects
     include "ocgcore"
     include "gframe"
-    if BUILD_LUA then include "lua" end
-    if BUILD_EVENT then include "event" end
-    if BUILD_FREETYPE then include "freetype" end
-    if BUILD_IRRLICHT then include "irrlicht" end
-    if BUILD_SQLITE then include "sqlite3" end
+    if BUILD_LUA then
+        include "lua"
+    end
+    if BUILD_EVENT then
+        include "event"
+    end
+    if BUILD_FREETYPE then
+        include "freetype"
+    end
+    if BUILD_IRRLICHT then
+        include "irrlicht"
+    end
+    if BUILD_SQLITE then
+        include "sqlite3"
+    end
     if USE_AUDIO then
-        if AUDIO_LIB=="miniaudio" then include "miniaudio" end
-        if IRRKLANG_PRO_BUILD_IKPMP3 then include "ikpmp3" end
+        if AUDIO_LIB=="miniaudio" then
+            include "miniaudio"
+        end
+        if IRRKLANG_PRO_BUILD_IKPMP3 then
+            include "ikpmp3"
+        end
     end
-
--- ===================================================================
--- Dynamic Configuration for Lua Bindings
--- This filter applies extra configurations to the 'ocgcore' project
--- based on the command-line options provided.
--- ===================================================================
-filter "project:ocgcore"
-    if GetParam("with-lua-curl") then
-        print("Integrating Lua-cURLv3 into ocgcore project...")
-        -- **路径修正**: 从 "../lua-cURLv3/src" 改为 "lua-cURLv3/src"
-        includedirs { "lua-cURLv3/src" }
-        files { "lua-cURLv3/src/**.c" }
-        links { "curl" }
-        defines { "YGOPRO_LUACURL_ENABLED" }
-    end
-
-    if GetParam("with-lua-sqlite") then
-        print("Integrating lsqlite3 into ocgcore project...")
-        -- **路径修正**: 从 "../lsqlite3/lsqlite3.c" 改为 "lsqlite3/lsqlite3.c"
-        files { "lsqlite3/lsqlite3.c" }
-        links { "sqlite3" }
-        defines { "YGOPRO_LSQLITE3_ENABLED" }
-    end
-
-filter {} -- reset filter
