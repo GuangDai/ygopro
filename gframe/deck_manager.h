@@ -8,19 +8,19 @@
 #include "bufferio.h"
 
 #ifndef YGOPRO_MAX_DECK
-#define YGOPRO_MAX_DECK					60
+#define YGOPRO_MAX_DECK					255
 #endif
 
 #ifndef YGOPRO_MIN_DECK
-#define YGOPRO_MIN_DECK					40
+#define YGOPRO_MIN_DECK					10
 #endif
 
 #ifndef YGOPRO_MAX_EXTRA
-#define YGOPRO_MAX_EXTRA					15
+#define YGOPRO_MAX_EXTRA					255
 #endif
 
 #ifndef YGOPRO_MAX_SIDE
-#define YGOPRO_MAX_SIDE					15
+#define YGOPRO_MAX_SIDE					255
 #endif
 
 namespace ygo {
@@ -158,15 +158,15 @@ extern DeckManager deckManager;
 #endif
 
 #ifndef DECKCOUNT_MAIN_MAX
-#define DECKCOUNT_MAIN_MAX 99
+#define DECKCOUNT_MAIN_MAX 255
 #endif
 
 #ifndef DECKCOUNT_SIDE
-#define DECKCOUNT_SIDE 99
+#define DECKCOUNT_SIDE 255
 #endif
 
 #ifndef DECKCOUNT_EXTRA
-#define DECKCOUNT_EXTRA 99
+#define DECKCOUNT_EXTRA 255
 #endif
 
 #endif //YGOPRO_SERVER_MODE
