@@ -75,8 +75,8 @@ struct Config {
 	wchar_t gamename[20]{};
 	wchar_t roompass[20]{};
 	//path
-	wchar_t lastcategory[256]{};
-	wchar_t lastdeck[256]{};
+	wchar_t lastcategory[65536]{};
+	wchar_t lastdeck[65536]{};
 	wchar_t textfont[256]{};
 	wchar_t numfont[256]{};
 	wchar_t bot_deck_path[256]{};
