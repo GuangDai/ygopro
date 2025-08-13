@@ -16,7 +16,7 @@ namespace ygo {
 	constexpr int SIZE_NETWORK_BUFFER = 0x20000;
 	constexpr int MAX_DATA_SIZE = UINT16_MAX - 1;
 	constexpr unsigned int MAINC_MAX = 65535;	// the limit of card_state
-	constexpr int SIDEC_MAX = MAINC_MAX;
+	constexpr unsigned int SIDEC_MAX = MAINC_MAX;
 
 struct HostInfo {
 	uint32_t lflist{};
