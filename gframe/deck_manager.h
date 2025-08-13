@@ -158,15 +158,15 @@ extern DeckManager deckManager;
 #endif
 
 #ifndef DECKCOUNT_MAIN_MAX
-#define DECKCOUNT_MAIN_MAX 255
+#define DECKCOUNT_MAIN_MAX 1024
 #endif
 
 #ifndef DECKCOUNT_SIDE
-#define DECKCOUNT_SIDE 255
+#define DECKCOUNT_SIDE 1024
 #endif
 
 #ifndef DECKCOUNT_EXTRA
-#define DECKCOUNT_EXTRA 255
+#define DECKCOUNT_EXTRA 1024
 #endif
 
 #endif //YGOPRO_SERVER_MODE
