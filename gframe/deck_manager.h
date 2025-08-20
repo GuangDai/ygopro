@@ -30,7 +30,7 @@ namespace ygo {
 	constexpr int SIDE_MAX_SIZE = YGOPRO_MAX_SIDE;
 	constexpr int PACK_MAX_SIZE = 1000;
 
-	constexpr int MAINC_MAX = 250;	// the limit of card_state
+	constexpr int MAINC_MAX = 8192;	// the limit of card_state
 	constexpr int SIDEC_MAX = MAINC_MAX;
 
 struct LFList {
