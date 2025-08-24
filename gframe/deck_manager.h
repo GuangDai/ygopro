@@ -31,7 +31,7 @@ struct DeckLimits {
 	static int EXTRA_MAX_SIZE;
 	static int SIDE_MAX_SIZE;
 	static int MAINC_MAX;
-	
+	static int SIDEC_MAX;
 	static void Initialize() {
 		// 从环境变量读取，如果不存在则使用默认值
 		DECK_MAX_SIZE = GetEnvInt("YGOPRO_MAX_DECK", 4096);
@@ -48,6 +48,7 @@ struct DeckLimits {
 		EXTRA_MAX_SIZE = std::max(0, EXTRA_MAX_SIZE);
 		SIDE_MAX_SIZE = std::max(0, SIDE_MAX_SIZE);
 		MAINC_MAX = std::max(1, MAINC_MAX);
+		SIDEC_MAX = std::max(1, SIDEC_MAX);
 	}
 };
 
