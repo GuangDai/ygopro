@@ -10,12 +10,13 @@ int DeckLimits::DECK_MAX_SIZE = 60;
 int DeckLimits::DECK_MIN_SIZE = 40;
 int DeckLimits::EXTRA_MAX_SIZE = 15;
 int DeckLimits::SIDE_MAX_SIZE = 15;
+int DeckLimits::MAX_CARD_COPIES = 3;
 
 int& DECK_MAX_SIZE = DeckLimits::DECK_MAX_SIZE;
 int& DECK_MIN_SIZE = DeckLimits::DECK_MIN_SIZE;
 int& EXTRA_MAX_SIZE = DeckLimits::EXTRA_MAX_SIZE;
 int& SIDE_MAX_SIZE = DeckLimits::SIDE_MAX_SIZE;
-
+int& MAX_CARD_COPIES = DeckLimits::MAX_CARD_COPIES; 
 static struct DeckLimitsInitializer {
 	DeckLimitsInitializer() {
 		DeckLimits::Initialize();
@@ -27,7 +28,6 @@ static struct DeckLimitsInitializer {
 char DeckManager::deckBuffer[0x10000]{};
 #endif
 DeckManager deckManager;
-
 
 void DeckManager::LoadLFListSingle(const char* path, bool insert) {
 	FILE* fp = myfopen(path, "r");
@@ -131,7 +131,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 		int code = cit->second.alias ? cit->second.alias : cit->first;
 		ccount[code]++;
 		int dc = ccount[code];
-		if(dc > 3)
+		if(dc > MAX_CARD_COPIES)
 			return (DECKERROR_CARDCOUNT << 28) | cit->first;
 		auto it = list.find(code);
 		if(it != list.end() && dc > it->second)
@@ -146,7 +146,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 		int code = cit->second.alias ? cit->second.alias : cit->first;
 		ccount[code]++;
 		int dc = ccount[code];
-		if(dc > 3)
+		if(dc > MAX_CARD_COPIES)
 			return (DECKERROR_CARDCOUNT << 28) | cit->first;
 		auto it = list.find(code);
 		if(it != list.end() && dc > it->second)
@@ -161,7 +161,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 		int code = cit->second.alias ? cit->second.alias : cit->first;
 		ccount[code]++;
 		int dc = ccount[code];
-		if(dc > 3)
+		if(dc > MAX_CARD_COPIES)
 			return (DECKERROR_CARDCOUNT << 28) | cit->first;
 		auto it = list.find(code);
 		if(it != list.end() && dc > it->second)
