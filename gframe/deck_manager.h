@@ -11,6 +11,10 @@
 
 namespace ygo {
 
+constexpr int MAINC_MAX = 65535;
+constexpr int SIDEC_MAX = 65535;
+
+// 辅助函数：从环境变量获取整数值，如果不存在则返回默认值
 inline int GetEnvInt(const char* name, int default_value) {
 	const char* env_value = std::getenv(name);
 	if (env_value) {
@@ -23,38 +27,32 @@ inline int GetEnvInt(const char* name, int default_value) {
 	return default_value;
 }
 
+// 使用静态初始化确保这些值在程序启动时就被设置
 struct DeckLimits {
 	static int DECK_MAX_SIZE;
 	static int DECK_MIN_SIZE;
 	static int EXTRA_MAX_SIZE;
 	static int SIDE_MAX_SIZE;
-	static int MAINC_MAX;
-	static int SIDEC_MAX;
+	
 	static void Initialize() {
-		DECK_MAX_SIZE = GetEnvInt("YGOPRO_MAX_DECK", 4096);
-		DECK_MIN_SIZE = GetEnvInt("YGOPRO_MIN_DECK", 10);
-		EXTRA_MAX_SIZE = GetEnvInt("YGOPRO_MAX_EXTRA", 4096);
-		SIDE_MAX_SIZE = GetEnvInt("YGOPRO_MAX_SIDE", 4096);
+		DECK_MAX_SIZE = GetEnvInt("YGOPRO_MAX_DECK", 60);
+		DECK_MIN_SIZE = GetEnvInt("YGOPRO_MIN_DECK", 40);
+		EXTRA_MAX_SIZE = GetEnvInt("YGOPRO_MAX_EXTRA", 15);
+		SIDE_MAX_SIZE = GetEnvInt("YGOPRO_MAX_SIDE", 15);
 		
-		MAINC_MAX = (DECK_MAX_SIZE + EXTRA_MAX_SIZE + SIDE_MAX_SIZE) * 2;
-		SIDEC_MAX = MAINC_MAX;
+		
 		DECK_MIN_SIZE = std::max(1, std::min(DECK_MIN_SIZE, DECK_MAX_SIZE));
 		DECK_MAX_SIZE = std::max(DECK_MIN_SIZE, DECK_MAX_SIZE);
 		EXTRA_MAX_SIZE = std::max(0, EXTRA_MAX_SIZE);
 		SIDE_MAX_SIZE = std::max(0, SIDE_MAX_SIZE);
-		MAINC_MAX = std::max(1, MAINC_MAX);
-		SIDEC_MAX = std::max(1, SIDEC_MAX);
 	}
 };
+
 
 extern int& DECK_MAX_SIZE;
 extern int& DECK_MIN_SIZE;
 extern int& EXTRA_MAX_SIZE;
 extern int& SIDE_MAX_SIZE;
-extern int& MAINC_MAX;
-extern int& SIDEC_MAX;
-
-constexpr int NETWORK_DECK_BUFFER_SIZE = 16384;
 
 constexpr int PACK_MAX_SIZE = 1000;
 
@@ -187,7 +185,6 @@ extern DeckManager deckManager;
 }
 
 #ifdef YGOPRO_SERVER_MODE
-
 #define DECKCOUNT_MAIN_MIN ygo::DECK_MIN_SIZE
 #define DECKCOUNT_MAIN_MAX ygo::DECK_MAX_SIZE
 #define DECKCOUNT_SIDE ygo::SIDE_MAX_SIZE
