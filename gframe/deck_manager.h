@@ -41,7 +41,7 @@ struct DeckLimits {
 		
 		// 计算 MAINC_MAX
 		MAINC_MAX = (DECK_MAX_SIZE + EXTRA_MAX_SIZE + SIDE_MAX_SIZE) * 2;
-		
+		SIDEC_MAX = MAINC_MAX;
 		// 确保值的合理性
 		DECK_MIN_SIZE = std::max(1, std::min(DECK_MIN_SIZE, DECK_MAX_SIZE));
 		DECK_MAX_SIZE = std::max(DECK_MIN_SIZE, DECK_MAX_SIZE);
@@ -57,6 +57,7 @@ inline int& DECK_MIN_SIZE = DeckLimits::DECK_MIN_SIZE;
 inline int& EXTRA_MAX_SIZE = DeckLimits::EXTRA_MAX_SIZE;
 inline int& SIDE_MAX_SIZE = DeckLimits::SIDE_MAX_SIZE;
 inline int& MAINC_MAX = DeckLimits::MAINC_MAX;
+inline int& SIDEC_MAX = DeckLimits::SIDEC_MAX;
 
 constexpr int PACK_MAX_SIZE = 1000;
 
