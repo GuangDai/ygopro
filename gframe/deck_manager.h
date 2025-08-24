@@ -17,7 +17,7 @@ inline int GetEnvInt(const char* name, int default_value) {
 	if (env_value) {
 		char* end;
 		long val = std::strtol(env_value, &end, 10);
-		if (*end == '\0' && val >= 0 && val <= INT_MAX) {
+		if (*end == '\0' && val >= 0 && val <= 65535) {
 			return static_cast<int>(val);
 		}
 	}
@@ -52,13 +52,14 @@ struct DeckLimits {
 	}
 };
 
-// 为了向后兼容，保留这些名称作为引用
-inline int& DECK_MAX_SIZE = DeckLimits::DECK_MAX_SIZE;
-inline int& DECK_MIN_SIZE = DeckLimits::DECK_MIN_SIZE;
-inline int& EXTRA_MAX_SIZE = DeckLimits::EXTRA_MAX_SIZE;
-inline int& SIDE_MAX_SIZE = DeckLimits::SIDE_MAX_SIZE;
-inline int& MAINC_MAX = DeckLimits::MAINC_MAX;
-inline int& SIDEC_MAX = DeckLimits::SIDEC_MAX;
+// 【C++14 兼容性修改】
+// 为了向后兼容，使用 extern 声明这些引用，定义将在 .cpp 文件中提供
+extern int& DECK_MAX_SIZE;
+extern int& DECK_MIN_SIZE;
+extern int& EXTRA_MAX_SIZE;
+extern int& SIDE_MAX_SIZE;
+extern int& MAINC_MAX;
+extern int& SIDEC_MAX;
 
 constexpr int PACK_MAX_SIZE = 1000;
 
@@ -140,7 +141,7 @@ private:
 	template<typename LineProvider>
 	void _LoadLFListFromLineProvider(LineProvider getLine, bool insert = false) {
 		std::vector<LFList> loadedLists;
-		auto cur = loadedLists.rend(); // 注意：在临时 list 上操作
+		auto cur = loadedLists.rend();
 		char linebuf[256]{};
 		wchar_t strBuffer[256]{};
 
