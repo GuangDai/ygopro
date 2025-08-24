@@ -11,7 +11,6 @@
 
 namespace ygo {
 
-// 辅助函数：从环境变量获取整数值，如果不存在则返回默认值
 inline int GetEnvInt(const char* name, int default_value) {
 	const char* env_value = std::getenv(name);
 	if (env_value) {
@@ -24,7 +23,6 @@ inline int GetEnvInt(const char* name, int default_value) {
 	return default_value;
 }
 
-// 使用静态初始化确保这些值在程序启动时就被设置
 struct DeckLimits {
 	static int DECK_MAX_SIZE;
 	static int DECK_MIN_SIZE;
@@ -33,16 +31,13 @@ struct DeckLimits {
 	static int MAINC_MAX;
 	static int SIDEC_MAX;
 	static void Initialize() {
-		// 从环境变量读取，如果不存在则使用默认值
 		DECK_MAX_SIZE = GetEnvInt("YGOPRO_MAX_DECK", 4096);
 		DECK_MIN_SIZE = GetEnvInt("YGOPRO_MIN_DECK", 10);
 		EXTRA_MAX_SIZE = GetEnvInt("YGOPRO_MAX_EXTRA", 4096);
 		SIDE_MAX_SIZE = GetEnvInt("YGOPRO_MAX_SIDE", 4096);
 		
-		// 计算 MAINC_MAX
 		MAINC_MAX = (DECK_MAX_SIZE + EXTRA_MAX_SIZE + SIDE_MAX_SIZE) * 2;
 		SIDEC_MAX = MAINC_MAX;
-		// 确保值的合理性
 		DECK_MIN_SIZE = std::max(1, std::min(DECK_MIN_SIZE, DECK_MAX_SIZE));
 		DECK_MAX_SIZE = std::max(DECK_MIN_SIZE, DECK_MAX_SIZE);
 		EXTRA_MAX_SIZE = std::max(0, EXTRA_MAX_SIZE);
@@ -52,14 +47,14 @@ struct DeckLimits {
 	}
 };
 
-// 【C++14 兼容性修改】
-// 为了向后兼容，使用 extern 声明这些引用，定义将在 .cpp 文件中提供
 extern int& DECK_MAX_SIZE;
 extern int& DECK_MIN_SIZE;
 extern int& EXTRA_MAX_SIZE;
 extern int& SIDE_MAX_SIZE;
 extern int& MAINC_MAX;
 extern int& SIDEC_MAX;
+
+constexpr int NETWORK_DECK_BUFFER_SIZE = 16384;
 
 constexpr int PACK_MAX_SIZE = 1000;
 
@@ -193,7 +188,6 @@ extern DeckManager deckManager;
 
 #ifdef YGOPRO_SERVER_MODE
 
-// 定义 DECKCOUNT_* 宏，使其与 YGOPRO_* 对应
 #define DECKCOUNT_MAIN_MIN ygo::DECK_MIN_SIZE
 #define DECKCOUNT_MAIN_MAX ygo::DECK_MAX_SIZE
 #define DECKCOUNT_SIDE ygo::SIDE_MAX_SIZE
