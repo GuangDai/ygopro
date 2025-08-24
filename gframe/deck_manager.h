@@ -4,80 +4,29 @@
 #include <unordered_map>
 #include <vector>
 #include <sstream>
-#include <cstdlib>
 #include "data_manager.h"
 #include "bufferio.h"
 
 namespace ygo {
 
-// 环境变量配置类 - 单例模式，程序启动时一次性读取
-class DeckConfig {
-private:
-    static DeckConfig* instance;
-    int max_deck;
-    int min_deck;
-    int max_extra;
-    int max_side;
-    int pack_max_size;
-    int mainc_max;
-    int sidec_max;
-    
-    // 私有构造函数，确保单例
-    DeckConfig() {
-        max_deck = getEnvInt("YGOPRO_MAX_DECK", 4096);
-        min_deck = getEnvInt("YGOPRO_MIN_DECK", 10);
-        max_extra = getEnvInt("YGOPRO_MAX_EXTRA", 4096);
-        max_side = getEnvInt("YGOPRO_MAX_SIDE", 4096);
-        pack_max_size = getEnvInt("YGOPRO_PACK_MAX_SIZE", 1000);
-        
-        // 计算MAINC_MAX
-        mainc_max = (max_deck + max_extra + max_side) * 2;
-        sidec_max = mainc_max;
-    }
-    
-    static int getEnvInt(const char* envName, int defaultValue) {
-        const char* envValue = std::getenv(envName);
-        if (envValue && *envValue) {
-            int value = std::atoi(envValue);
-            return value > 0 ? value : defaultValue;
-        }
-        return defaultValue;
-    }
-    
-public:
-    static DeckConfig* getInstance() {
-        if (!instance) {
-            instance = new DeckConfig();
-        }
-        return instance;
-    }
-    
-    int getDeckMaxSize() const { return max_deck; }
-    int getDeckMinSize() const { return min_deck; }
-    int getExtraMaxSize() const { return max_extra; }
-    int getSideMaxSize() const { return max_side; }
-    int getPackMaxSize() const { return pack_max_size; }
-    int getMaincMax() const { return mainc_max; }
-    int getSidecMax() const { return sidec_max; }
-};
+// 配置变量声明 - 在cpp文件中定义和初始化
+extern int DECK_MAX_SIZE;
+extern int DECK_MIN_SIZE;
+extern int EXTRA_MAX_SIZE;
+extern int SIDE_MAX_SIZE;
+extern int PACK_MAX_SIZE;
+extern int MAINC_MAX;
+extern int SIDEC_MAX;
 
-// 为了保持API兼容性，提供便捷的访问方法
-inline int getDeckMaxSize() { return DeckConfig::getInstance()->getDeckMaxSize(); }
-inline int getDeckMinSize() { return DeckConfig::getInstance()->getDeckMinSize(); }
-inline int getExtraMaxSize() { return DeckConfig::getInstance()->getExtraMaxSize(); }
-inline int getSideMaxSize() { return DeckConfig::getInstance()->getSideMaxSize(); }
-inline int getPackMaxSize() { return DeckConfig::getInstance()->getPackMaxSize(); }
-inline int getMaincMax() { return DeckConfig::getInstance()->getMaincMax(); }
-inline int getSidecMax() { return DeckConfig::getInstance()->getSidecMax(); }
+// 编译时常量 - 用于数组声明，必须足够大以容纳任何合理的配置值
+constexpr int DECK_MAX_SIZE_COMPILE = 8192;
+constexpr int EXTRA_MAX_SIZE_COMPILE = 8192;
+constexpr int SIDE_MAX_SIZE_COMPILE = 8192;
+constexpr int PACK_MAX_SIZE_COMPILE = 8192;
+constexpr int MAINC_MAX_COMPILE = 24576;  // (8192+8192+8192)*2 的安全余量
 
-// 为了向后兼容，保留旧的常量名称
-#define DECK_MAX_SIZE getDeckMaxSize()
-#define DECK_MIN_SIZE getDeckMinSize()
-#define EXTRA_MAX_SIZE getExtraMaxSize()
-#define SIDE_MAX_SIZE getSideMaxSize()
-#define PACK_MAX_SIZE getPackMaxSize()
-#define MAINC_MAX getMaincMax()
-#define SIDEC_MAX getSidecMax()
+// 初始化函数声明 - 必须在使用配置变量前调用
+void InitializeDeckConfig();
 
 struct LFList {
 	unsigned int hash{};
@@ -209,11 +158,11 @@ extern DeckManager deckManager;
 
 #ifdef YGOPRO_SERVER_MODE
 
-// 服务器模式下的牌组数量限制，直接对应到环境变量配置值
-#define DECKCOUNT_MAIN_MIN		ygo::getDeckMinSize()
-#define DECKCOUNT_MAIN_MAX		ygo::getDeckMaxSize()
-#define DECKCOUNT_SIDE			ygo::getSideMaxSize()
-#define DECKCOUNT_EXTRA			ygo::getExtraMaxSize()
+// 服务器模式下的牌组数量限制，直接对应环境变量配置值
+#define DECKCOUNT_MAIN_MIN		ygo::DECK_MIN_SIZE
+#define DECKCOUNT_MAIN_MAX		ygo::DECK_MAX_SIZE
+#define DECKCOUNT_SIDE			ygo::SIDE_MAX_SIZE
+#define DECKCOUNT_EXTRA			ygo::EXTRA_MAX_SIZE
 
 #endif //YGOPRO_SERVER_MODE
 
