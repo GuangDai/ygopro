@@ -4,29 +4,61 @@
 #include <unordered_map>
 #include <vector>
 #include <sstream>
+#include <cstdlib>
+#include <algorithm>
 #include "data_manager.h"
 #include "bufferio.h"
 
 namespace ygo {
 
-// 配置变量声明 - 在cpp文件中定义和初始化
-extern int DECK_MAX_SIZE;
-extern int DECK_MIN_SIZE;
-extern int EXTRA_MAX_SIZE;
-extern int SIDE_MAX_SIZE;
-extern int PACK_MAX_SIZE;
-extern int MAINC_MAX;
-extern int SIDEC_MAX;
+// 辅助函数：从环境变量获取整数值，如果不存在则返回默认值
+inline int GetEnvInt(const char* name, int default_value) {
+	const char* env_value = std::getenv(name);
+	if (env_value) {
+		char* end;
+		long val = std::strtol(env_value, &end, 10);
+		if (*end == '\0' && val >= 0 && val <= INT_MAX) {
+			return static_cast<int>(val);
+		}
+	}
+	return default_value;
+}
 
-// 编译时常量 - 用于数组声明，必须足够大以容纳任何合理的配置值
-constexpr int DECK_MAX_SIZE_COMPILE = 8192;
-constexpr int EXTRA_MAX_SIZE_COMPILE = 8192;
-constexpr int SIDE_MAX_SIZE_COMPILE = 8192;
-constexpr int PACK_MAX_SIZE_COMPILE = 8192;
-constexpr int MAINC_MAX_COMPILE = 24576;  // (8192+8192+8192)*2 的安全余量
+// 使用静态初始化确保这些值在程序启动时就被设置
+struct DeckLimits {
+	static int DECK_MAX_SIZE;
+	static int DECK_MIN_SIZE;
+	static int EXTRA_MAX_SIZE;
+	static int SIDE_MAX_SIZE;
+	static int MAINC_MAX;
+	
+	static void Initialize() {
+		// 从环境变量读取，如果不存在则使用默认值
+		DECK_MAX_SIZE = GetEnvInt("YGOPRO_MAX_DECK", 4096);
+		DECK_MIN_SIZE = GetEnvInt("YGOPRO_MIN_DECK", 10);
+		EXTRA_MAX_SIZE = GetEnvInt("YGOPRO_MAX_EXTRA", 4096);
+		SIDE_MAX_SIZE = GetEnvInt("YGOPRO_MAX_SIDE", 4096);
+		
+		// 计算 MAINC_MAX
+		MAINC_MAX = (DECK_MAX_SIZE + EXTRA_MAX_SIZE + SIDE_MAX_SIZE) * 2;
+		
+		// 确保值的合理性
+		DECK_MIN_SIZE = std::max(1, std::min(DECK_MIN_SIZE, DECK_MAX_SIZE));
+		DECK_MAX_SIZE = std::max(DECK_MIN_SIZE, DECK_MAX_SIZE);
+		EXTRA_MAX_SIZE = std::max(0, EXTRA_MAX_SIZE);
+		SIDE_MAX_SIZE = std::max(0, SIDE_MAX_SIZE);
+		MAINC_MAX = std::max(1, MAINC_MAX);
+	}
+};
 
-// 初始化函数声明 - 必须在使用配置变量前调用
-void InitializeDeckConfig();
+// 为了向后兼容，保留这些名称作为引用
+inline int& DECK_MAX_SIZE = DeckLimits::DECK_MAX_SIZE;
+inline int& DECK_MIN_SIZE = DeckLimits::DECK_MIN_SIZE;
+inline int& EXTRA_MAX_SIZE = DeckLimits::EXTRA_MAX_SIZE;
+inline int& SIDE_MAX_SIZE = DeckLimits::SIDE_MAX_SIZE;
+inline int& MAINC_MAX = DeckLimits::MAINC_MAX;
+
+constexpr int PACK_MAX_SIZE = 1000;
 
 struct LFList {
 	unsigned int hash{};
@@ -158,11 +190,11 @@ extern DeckManager deckManager;
 
 #ifdef YGOPRO_SERVER_MODE
 
-// 服务器模式下的牌组数量限制，直接对应环境变量配置值
-#define DECKCOUNT_MAIN_MIN		ygo::DECK_MIN_SIZE
-#define DECKCOUNT_MAIN_MAX		ygo::DECK_MAX_SIZE
-#define DECKCOUNT_SIDE			ygo::SIDE_MAX_SIZE
-#define DECKCOUNT_EXTRA			ygo::EXTRA_MAX_SIZE
+// 定义 DECKCOUNT_* 宏，使其与 YGOPRO_* 对应
+#define DECKCOUNT_MAIN_MIN ygo::DECK_MIN_SIZE
+#define DECKCOUNT_MAIN_MAX ygo::DECK_MAX_SIZE
+#define DECKCOUNT_SIDE ygo::SIDE_MAX_SIZE
+#define DECKCOUNT_EXTRA ygo::EXTRA_MAX_SIZE
 
 #endif //YGOPRO_SERVER_MODE
 
