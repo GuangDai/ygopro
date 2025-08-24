@@ -45,6 +45,7 @@ struct DeckLimits {
 		EXTRA_MAX_SIZE = std::max(0, EXTRA_MAX_SIZE);
 		SIDE_MAX_SIZE = std::max(0, SIDE_MAX_SIZE);
 		MAX_CARD_COPIES = std::max(0, MAX_CARD_COPIES);
+	}
 };
 
 extern int& DECK_MAX_SIZE;
