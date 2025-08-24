@@ -3,67 +3,22 @@
 #include "myfilesystem.h"
 #include "network.h"
 #include "base64.h"
-#include <cstdlib>
-#include <algorithm>
 
 namespace ygo {
 
-// 配置变量定义
-int DECK_MAX_SIZE = 4096;
-int DECK_MIN_SIZE = 10;
-int EXTRA_MAX_SIZE = 4096;
-int SIDE_MAX_SIZE = 4096;
-int PACK_MAX_SIZE = 1000;
-int MAINC_MAX = 8192;
-int SIDEC_MAX = 8192;
+// 初始化静态成员变量
+int DeckLimits::DECK_MAX_SIZE = 4096;
+int DeckLimits::DECK_MIN_SIZE = 10;
+int DeckLimits::EXTRA_MAX_SIZE = 4096;
+int DeckLimits::SIDE_MAX_SIZE = 4096;
+int DeckLimits::MAINC_MAX = 8192;
 
-// 环境变量读取辅助函数
-static int getEnvInt(const char* envName, int defaultValue) {
-	const char* envValue = std::getenv(envName);
-	if (envValue && *envValue) {
-		char* endptr;
-		long value = std::strtol(envValue, &endptr, 10);
-		// 检查转换是否成功且值在合理范围内
-		if (*endptr == '\0' && value > 0 && value <= 65536) {
-			return static_cast<int>(value);
-		}
+// 在程序启动时自动初始化
+static struct DeckLimitsInitializer {
+	DeckLimitsInitializer() {
+		DeckLimits::Initialize();
 	}
-	return defaultValue;
-}
-
-// 初始化函数实现
-void InitializeDeckConfig() {
-	static bool initialized = false;
-	if (initialized) return;
-	
-	DECK_MAX_SIZE = getEnvInt("YGOPRO_MAX_DECK", 4096);
-	DECK_MIN_SIZE = getEnvInt("YGOPRO_MIN_DECK", 10);
-	EXTRA_MAX_SIZE = getEnvInt("YGOPRO_MAX_EXTRA", 4096);
-	SIDE_MAX_SIZE = getEnvInt("YGOPRO_MAX_SIDE", 4096);
-	PACK_MAX_SIZE = getEnvInt("YGOPRO_PACK_MAX_SIZE", 1000);
-	
-	// 计算MAINC_MAX
-	MAINC_MAX = (DECK_MAX_SIZE + EXTRA_MAX_SIZE + SIDE_MAX_SIZE) * 2;
-	SIDEC_MAX = MAINC_MAX;
-	
-	// 安全检查：确保配置值不超过编译时常量
-	if (DECK_MAX_SIZE > DECK_MAX_SIZE_COMPILE) DECK_MAX_SIZE = DECK_MAX_SIZE_COMPILE;
-	if (EXTRA_MAX_SIZE > EXTRA_MAX_SIZE_COMPILE) EXTRA_MAX_SIZE = EXTRA_MAX_SIZE_COMPILE;
-	if (SIDE_MAX_SIZE > SIDE_MAX_SIZE_COMPILE) SIDE_MAX_SIZE = SIDE_MAX_SIZE_COMPILE;
-	if (PACK_MAX_SIZE > PACK_MAX_SIZE_COMPILE) PACK_MAX_SIZE = PACK_MAX_SIZE_COMPILE;
-	if (MAINC_MAX > MAINC_MAX_COMPILE) MAINC_MAX = MAINC_MAX_COMPILE;
-	if (SIDEC_MAX > MAINC_MAX_COMPILE) SIDEC_MAX = MAINC_MAX_COMPILE;
-	
-	initialized = true;
-}
-
-// 自动初始化器 - 确保在任何其他代码运行前初始化配置
-struct ConfigAutoInitializer {
-	ConfigAutoInitializer() {
-		InitializeDeckConfig();
-	}
-};
-static ConfigAutoInitializer g_config_init;
+} deckLimitsInitializer;
 
 #ifndef YGOPRO_SERVER_MODE
 char DeckManager::deckBuffer[0x10000]{};
@@ -149,11 +104,11 @@ static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
 unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int rule) {
 	std::unordered_map<int, int> ccount;
 	// rule
-	if(deck.main.size() < DECK_MIN_SIZE || deck.main.size() > DECK_MAX_SIZE)
+	if((int)deck.main.size() < DECK_MIN_SIZE || (int)deck.main.size() > DECK_MAX_SIZE)
 		return (DECKERROR_MAINCOUNT << 28) | (unsigned)deck.main.size();
-	if(deck.extra.size() > EXTRA_MAX_SIZE)
+	if((int)deck.extra.size() > EXTRA_MAX_SIZE)
 		return (DECKERROR_EXTRACOUNT << 28) | (unsigned)deck.extra.size();
-	if(deck.side.size() > SIDE_MAX_SIZE)
+	if((int)deck.side.size() > SIDE_MAX_SIZE)
 		return (DECKERROR_SIDECOUNT << 28) | (unsigned)deck.side.size();
 	auto lflist = GetLFList(lfhash);
 	if (!lflist)
@@ -229,11 +184,11 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 			continue;
 		}
 		if (cd.type & TYPES_EXTRA_DECK) {
-			if (deck.extra.size() < EXTRA_MAX_SIZE)
+			if ((int)deck.extra.size() < EXTRA_MAX_SIZE)
 				deck.extra.push_back(dataManager.GetCodePointer(code));
 		}
 		else {
-			if (deck.main.size() < DECK_MAX_SIZE)
+			if ((int)deck.main.size() < DECK_MAX_SIZE)
 				deck.main.push_back(dataManager.GetCodePointer(code));
 		}
 	}
@@ -247,7 +202,7 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 			errorcode = code;
 			continue;
 		}
-		if(deck.side.size() < SIDE_MAX_SIZE)
+		if((int)deck.side.size() < SIDE_MAX_SIZE)
 			deck.side.push_back(dataManager.GetCodePointer(code));
 	}
 	return errorcode;
@@ -256,12 +211,9 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 uint32_t DeckManager::LoadDeckFromStream(Deck& deck, std::istringstream& deckStream, bool is_packlist) {
 	int ct = 0;
 	int mainc = 0, sidec = 0;
-	// 使用编译时常量作为数组大小
-	uint32_t cardlist[PACK_MAX_SIZE_COMPILE]{};
+	uint32_t cardlist[PACK_MAX_SIZE]{};
 	bool is_side = false;
 	std::string linebuf;
-	
-	// 使用运行时配置值作为实际限制
 	while (std::getline(deckStream, linebuf, '\n') && ct < PACK_MAX_SIZE) {
 		if (linebuf[0] == '!') {
 			is_side = true;
@@ -502,5 +454,4 @@ bool DeckManager::SaveDeckArray(const DeckArray& deck, const wchar_t* name) {
 	return true;
 }
 #endif //YGOPRO_SERVER_MODE
-
 }
