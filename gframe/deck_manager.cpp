@@ -6,26 +6,16 @@
 
 namespace ygo {
 
-// 【C++14 兼容性修改】
-// 1. 定义 DeckLimits 结构体中的静态成员变量
-// 这些是编译时的默认值，程序启动时会被 Initialize() 中的值（可能来自环境变量）覆盖
-int DeckLimits::DECK_MAX_SIZE = 4096;
-int DeckLimits::DECK_MIN_SIZE = 10;
-int DeckLimits::EXTRA_MAX_SIZE = 4096;
-int DeckLimits::SIDE_MAX_SIZE = 4096;
-int DeckLimits::MAINC_MAX = (4096 + 4096 + 4096) * 2; // 根据默认值计算
-int DeckLimits::SIDEC_MAX = (4096 + 4096 + 4096) * 2; // 根据默认值计算
+int DeckLimits::DECK_MAX_SIZE = 60;
+int DeckLimits::DECK_MIN_SIZE = 40;
+int DeckLimits::EXTRA_MAX_SIZE = 15;
+int DeckLimits::SIDE_MAX_SIZE = 15;
 
-// 2. 为头文件中声明的 extern 引用提供唯一定义
 int& DECK_MAX_SIZE = DeckLimits::DECK_MAX_SIZE;
 int& DECK_MIN_SIZE = DeckLimits::DECK_MIN_SIZE;
 int& EXTRA_MAX_SIZE = DeckLimits::EXTRA_MAX_SIZE;
 int& SIDE_MAX_SIZE = DeckLimits::SIDE_MAX_SIZE;
-int& MAINC_MAX = DeckLimits::MAINC_MAX;
-int& SIDEC_MAX = DeckLimits::SIDEC_MAX;
 
-// 3. 使用静态初始化器确保在 main 函数之前调用 Initialize()
-//    这会读取环境变量并更新上面的值
 static struct DeckLimitsInitializer {
 	DeckLimitsInitializer() {
 		DeckLimits::Initialize();
@@ -38,7 +28,6 @@ char DeckManager::deckBuffer[0x10000]{};
 #endif
 DeckManager deckManager;
 
-// ... (以下所有代码保持不变) ...
 
 void DeckManager::LoadLFListSingle(const char* path, bool insert) {
 	FILE* fp = myfopen(path, "r");
