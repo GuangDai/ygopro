@@ -12,7 +12,7 @@ int DeckLimits::DECK_MIN_SIZE = 10;
 int DeckLimits::EXTRA_MAX_SIZE = 4096;
 int DeckLimits::SIDE_MAX_SIZE = 4096;
 int DeckLimits::MAINC_MAX = 8192;
-
+int DeckLimits::SIDEC_MAX = 8192
 // 在程序启动时自动初始化
 static struct DeckLimitsInitializer {
 	DeckLimitsInitializer() {
