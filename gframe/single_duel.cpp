@@ -459,8 +459,10 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	set_registry_value(pduel, "player_type_1", swapped ? "0" : "1");
 	set_player_info(pduel, 0, host_info.start_lp, host_info.start_hand, host_info.draw_count);
 	set_player_info(pduel, 1, host_info.start_lp, host_info.start_hand, host_info.draw_count);
+	preload_script(pduel, "./script/patches/entry.lua");
 	preload_script(pduel, "./script/special.lua");
 	preload_script(pduel, "./script/init.lua");
+	dataManager.LoadExtraScripts(pduel);
 	unsigned int opt = (unsigned int)host_info.duel_rule << 16;
 	if(host_info.no_shuffle_deck)
 		opt |= DUEL_PSEUDO_SHUFFLE;

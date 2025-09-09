@@ -61,8 +61,10 @@ int SingleMode::SinglePlayThread() {
 	set_registry_value(pduel, "player_type_1", "1");
 	set_player_info(pduel, 0, start_lp, start_hand, draw_count);
 	set_player_info(pduel, 1, start_lp, start_hand, draw_count);
+	preload_script(pduel, "./script/patches/entry.lua");
 	preload_script(pduel, "./script/special.lua");
 	preload_script(pduel, "./script/init.lua");
+	dataManager.LoadExtraScripts(pduel);
 	mainGame->dInfo.lp[0] = start_lp;
 	mainGame->dInfo.lp[1] = start_lp;
 	mainGame->dInfo.start_lp = start_lp;
